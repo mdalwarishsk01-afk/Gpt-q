@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Water Sort Puzzle — Click to Pour</title>
+<style>
+  :root{
+    --bg1:#8fbce6;
+    --bg2:#7aa7e6;
+    --wood:#7a4c2f;
+    --tube-white: rgba(255,255,255,0.9);
+    --glass: rgba(255,255,255,0.18);
+  }
+
+  html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+  body{
+    background: linear-gradient(180deg,var(--bg1),var(--bg2));
+    display:flex;flex-direction:column;align-items:center;padding:18px;
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  }
+
+  header{width:100%;max-width:980px;color:#fff;text-align:center;margin-bottom:12px}
+  h1{font-size:28px;margin:6px 0 0}
+  .info{display:flex;gap:12px;justify-content:center;margin-top:8px}
+  .chip{background:rgba(0,0,0,0.12);padding:6px 12px;border-radius:999px;font-weight:600}
+
+  .board-wrap{width:100%;max-width:980px;background:linear-gradient(180deg,#5a3b29 0%, #704424 100%);border-radius:14px;padding:22px;box-shadow:0 12px 30px rgba(0,0,0,0.25)}
+  .controls{display:flex;gap:10px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+  button{background:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700}
+  button:active{transform:translateY(1px)}
+  button.secondary{background:rgba(255,255,255,0.85)}
+  #game-board{
+    display:grid;
+    grid-template-columns:repeat(4, 120px);
+    gap:18px;
+    justify-content:center;
+    padding:6px;
+  }
+
+  /* tube */
+  .tube{
+    width:120px;height:260px;border-radius:28px 28px 40px 40px;
+    background:var(--glass);border:4px solid var(--tube-white);
+    position:relative;display:flex;flex-direction:column-reverse;overflow:hidden;
+    align-items:center;padding:8px;box-shadow: inset 0 -18px 40px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.25);
+    cursor:pointer;transition:transform .18s, box-shadow .18s;
+  }
+  .tube:hover{transform:translateY(-6px)}
+  .tube.selected{transform:translateY(-12px);box-shadow:0 0 22px 4px rgba(255,220,120,0.25)}
+  .tube::after{
+    content:'';position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);
+    width:66px;height:18px;background:#6b3d18;border-radius:50%;
+    box-shadow:0 6px 12px rgba(0,0,0,0.38);z-index:0;
+  }
+
+  .slot{
+    width:86%;height:24%;border-radius:6px;margin:6px 0;box-shadow: inset 0 -4px 8px rgba(0,0,0,0.15);
+    transition:transform .22s;
+    z-index:1;
+  }
+
+  /* empty tube faint gradient to show glass */
+  .tube.empty{background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));}
+
+  #win{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;
+    z-index:40;color:#fff
+  }
+  #win .card{background:linear-gradient(135deg,#5f8af4,#a36be6);padding:26px;border-radius:14px;text-align:center;box-shadow:0 18px 60px rgba(0,0,0,0.45)}
+  #win button{margin-top:14px;padding:10px 18px;border-radius:10px;background:#fff;color:#222;font-weight:800}
+
+  /* responsive */
+  @media (max-width:820px){
+    #game-board{grid-template-columns:repeat(3, 98px)}
+    .tube{width:98px;height:220px}
+  }
+  @media (max-width:480px){
+    #game-board{grid-template-columns:repeat(2, 92px)}
+    .tube{width:92px;height:200px}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Water Sort Puzzle</h1>
+    <div class="info">
+      <div class="chip">Moves: <span id="moves">0</span></div>
+      <div class="chip">Undo: <span id="undos">0</span></div>
+    </div>
+  </header>
+
+  <div class="board-wrap">
+    <div class="controls">
+      <button id="restartBtn">Restart</button>
+      <button id="undoBtn" class="secondary">Undo</button>
+      <button id="hintBtn" class="secondary">Hint</button>
+      <button id="autoBtn" class="secondary">Auto Solve (demo)</button>
+    </div>
+
+    <div id="game-board" aria-live="polite"></div>
+  </div>
+
+  <div id="win" role="dialog" aria-modal="true">
+    <div class="card">
+      <h2>🎉 Level Complete!</h2>
+      <p style="opacity:.95">You solved the puzzle in <strong id="finalMoves">0</strong> moves.</p>
+      <button id="playAgain">Play Again</button>
+    </div>
+  </div>
+
+<script>
+/*
+  Click-to-pour Water Sort Puzzle
+  - 8 tubes: 6 filled (4 units each), 2 empty
+  - Uses "scramble by valid pours" so generated puzzles are solvable
+  - Click a tube to select, click another to pour
+  - Undo, Hint, Restart, simple Auto Solve (greedy demo)
+*/
+
+const COLOR_PALETTE = [
+  '#3aa4ff', // blue
+  '#ff5c5c', // red
+  '#9b6bff', // purple
+  '#ff9f1c', // orange
+  '#23d18b', // green
+  '#18c6aa'  // teal
+];
+
+const TUBE_CAPACITY = 4;
+const FILLED_TUBES = 6; // number of color stacks
+const TOTAL_TUBES = FILLED_TUBES + 2; // 8
+
+let tubes = [];      // array of arrays (colors)
+let history = [];    // for undo (stores deep copies)
+let selected = null; // index of selected tube
+let moves = 0;
+let undosUsed = 0;
+let solving = false;
+
+const boardEl = document.getElementById('game-board');
+const movesEl = document.getElementById('moves');
+const undosEl = document.getElementById('undos');
+const winEl = document.getElementById('win');
+const finalMovesEl = document.getElementById('finalMoves');
+
+document.getElementById('restartBtn').addEventListener('click', ()=>{ if(!solving) restart(); });
+document.getElementById('undoBtn').addEventListener('click', ()=>{ if(!solving) undo(); });
+document.getElementById('hintBtn').addEventListener('click', ()=>{ if(!solving) hint(); });
+document.getElementById('playAgain').addEventListener('click', ()=>{ winEl.style.display='none'; restart(); });
+document.getElementById('autoBtn').addEventListener('click', ()=>{ if(!solving) autoSolveDemo(); });
+
+/* Utility: deep clone tubes */
+function cloneTubes(t){ return t.map(arr => arr.slice()); }
+
+/* Initialize solved setup then scramble with valid pours */
+function initGame(){
+  solving = false;
+  selected = null;
+  history = [];
+  moves = 0; undosUsed = 0;
+  movesEl.textContent = moves;
+  undosEl.textContent = undosUsed;
+  winEl.style.display = 'none';
+
+  // build solved tubes
+  const allUnits = [];
+  COLOR_PALETTE.forEach((c,i)=>{
+    // only use as many colors as FILLED_TUBES (we have 6 colors here and 6 filled tubes)
+    for(let k=0;k<TUBE_CAPACITY;k++) allUnits.push(c);
+  });
+
+  // create initial solved tubes
+  tubes = [];
+  for(let i=0;i<FILLED_TUBES;i++){
+    tubes.push(allUnits.slice(i*TUBE_CAPACITY, i*TUBE_CAPACITY + TUBE_CAPACITY));
+  }
+  // add empty tubes
+  tubes.push([]); tubes.push([]);
+
+  // scramble by performing many random valid pours (keeps solvability)
+  for(let i=0;i<120;i++){
+    const a = Math.floor(Math.random()*tubes.length);
+    const b = Math.floor(Math.random()*tubes.length);
+    if(a === b) continue;
+    if(canPourIndex(a,b)) doPour(a,b,false);
+  }
+
+  // Ensure not already solved — if solved, scramble again
+  if(isSolved()) {
+    // rare; reshuffle once more
+    for(let i=0;i<80;i++){
+      const a = Math.floor(Math.random()*tubes.length);
+      const b = Math.floor(Math.random()*tubes.length);
+      if(a===b) continue;
+      if(canPourIndex(a,b)) doPour(a,b,false);
+    }
+  }
+
+  render();
+}
+
+/* Render board */
+function render(){
+  boardEl.innerHTML = '';
+  tubes.forEach((tube, idx)=>{
+    const t = document.createElement('div');
+    t.className = 'tube' + (tube.length===0 ? ' empty' : '');
+    if(selected === idx) t.classList.add('selected');
+    t.setAttribute('data-index', idx);
+    t.addEventListener('click', ()=>onTubeClick(idx));
+
+    // Add color slots (from bottom to top)
+    // We want fixed 4 slots visually; empty slots show glass
+    const filled = tube.slice();
+    // create placeholders from bottom up
+    for(let s=0;s<TUBE_CAPACITY;s++){
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      // if this slot should have color, fill from filled array bottom-up
+      const slotIndexFromBottom = s;
+      const colorIndex = filled.length - TUBE_CAPACITY + slotIndexFromBottom;
+      // simpler: map last N entries to bottom slots
+      // We'll place actual colors by iterating from bottom: last element is top, but we display reversed.
+      // Easier: compute how many empty slots: TUBE_CAPACITY - filled.length
+      const emptySlots = Math.max(0, TUBE_CAPACITY - filled.length);
+      if(s >= emptySlots){
+        // this slot has color — determine which color from filled
+        // filled[0] = bottom-most; need to pick filled[s - emptySlots]
+        const color = filled[s - emptySlots];
+        slot.style.background = color;
+      } else {
+        // empty slot: subtle glass gradient
+        slot.style.background = 'linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))';
+      }
+      t.appendChild(slot);
+    }
+
+    boardEl.appendChild(t);
+  });
+}
+
+/* Tube clicked */
+function onTubeClick(idx){
+  if(solving) return;
+  // if nothing selected, select this tube (only if not empty)
+  if(selected === null){
+    if(tubes[idx].length === 0) return; // don't select empty
+    selected = idx;
+    render();
+    return;
+  }
+  // if clicked same again -> deselect
+  if(selected === idx){ selected = null; render(); return; }
+
+  // attempt pour from selected -> idx
+  if(canPourIndex(selected, idx)){
+    // push history for undo
+    history.push(cloneTubes(tubes));
+    doPour(selected, idx, true);
+    moves++;
+    movesEl.textContent = moves;
+    selected = null;
+    render();
+    // small delay then check win (to allow UI update)
+    setTimeout(()=>{ if(isSolved()) showWin(); }, 120);
+  } else {
+    // invalid pour: deselect and give small feedback (pulse)
+    const prev = selected;
+    selected = null;
+    render();
+    flashInvalid(prev, idx);
+  }
+}
+
+/* Return true if pour allowed from index a to b */
+function canPourIndex(a,b){
+  const src = tubes[a], dst = tubes[b];
+  if(src.length === 0) return false;
+  if(dst.length >= TUBE_CAPACITY) return false;
+  const topSrc = src[src.length -1];
+  if(dst.length === 0) return true;
+  const topDst = dst[dst.length -1];
+  return topSrc === topDst;
+}
+
+/* perform pour (no history-related actions here) */
+function doPour(a,b,animate){
+  const src = tubes[a], dst = tubes[b];
+  if(src.length === 0) return;
+  const color = src[src.length -1];
+  // count contiguous top colors on source
+  let count = 0;
+  for(let k = src.length-1; k>=0; k--){
+    if(src[k] === color) count++;
+    else break;
+  }
+  const space = TUBE_CAPACITY - dst.length;
+  const moveCount = Math.min(count, space);
+  for(let m=0;m<moveCount;m++){
+    dst.push(src.pop());
+  }
+  if(animate){
+    // subtle animation: re-render (already done outside), but we can add a tiny bump
+    // no elaborate animation to keep code compact
+  }
+}
+
+/* Undo */
+function undo(){
+  if(history.length === 0) return;
+  tubes = history.pop();
+  undosUsed++;
+  undosEl.textContent = undosUsed;
+  moves = Math.max(0, moves-1);
+  movesEl.textContent = moves;
+  selected = null;
+  render();
+}
+
+/* Hint: highlight a valid move */
+function hint(){
+  for(let i=0;i<tubes.length;i++){
+    for(let j=0;j<tubes.length;j++){
+      if(i===j) continue;
+      if(canPourIndex(i,j)){
+        // highlight both
+        const elements = document.querySelectorAll('.tube');
+        elements[i].classList.add('selected');
+        elements[j].classList.add('selected');
+        setTimeout(()=>{ elements[i].classList.remove('selected'); elements[j].classList.remove('selected'); }, 900);
+        return;
+      }
+    }
+  }
+}
+
+/* Simple flash for invalid pour */
+function flashInvalid(a,b){
+  const elements = document.querySelectorAll('.tube');
+  if(elements[a]) elements[a].style.transform = 'translateY(0) scale(0.98)';
+  if(elements[b]) elements[b].style.transform = 'translateY(0) scale(0.98)';
+  setTimeout(()=>{ if(elements[a]) elements[a].style.transform=''; if(elements[b]) elements[b].style.transform=''; }, 160);
+}
+
+/* Check win: every tube empty or full and all colors same */
+function isSolved(){
+  return tubes.every(t => (t.length === 0) || (t.length === TUBE_CAPACITY && new Set(t).size === 1));
+}
+
+/* Show win UI */
+function showWin(){
+  finalMovesEl.textContent = moves;
+  winEl.style.display = 'flex';
+}
+
+/* Restart */
+function restart(){
+  initGame();
+}
+
+/* Auto-solve demo: greedy algorithm (not optimal solver). It will try pours until no moves left.
+   This is a helper only; the user can solve manually. */
+async function autoSolveDemo(){
+  if(solving) return;
+  solving = true;
+  // small throttle function
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  // limit iterations
+  let progress = true;
+  while(!isSolved() && progress){
+    progress = false;
+    // try pours in order; if a pour occurs, await and continue
+    outer: for(let i=0;i<tubes.length;i++){
+      for(let j=0;j<tubes.length;j++){
+        if(i===j) continue;
+        if(canPourIndex(i,j)){
+          history.push(cloneTubes(tubes));
+          doPour(i,j,true);
+          moves++;
+          movesEl.textContent = moves;
+          render();
+          progress = true;
+          await sleep(200);
+          break outer;
+        }
+      }
+    }
+    // safety bail-out
+    if(moves > 1200) break;
+  }
+  if(isSolved()) showWin();
+  solving = false;
+}
+
+/* start */
+initGame();
+</script>
+</body>
+</html>
