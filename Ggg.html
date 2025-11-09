@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scientific Calculator</title>
+<style>
+body{font-family:sans-serif;background:#111;color:#fff;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+.calculator{background:#222;padding:20px;border-radius:10px;box-shadow:0 0 20px #000;width:320px}
+.display{background:#000;padding:10px;border-radius:8px;font-size:24px;text-align:right;margin-bottom:10px;word-wrap:break-word;min-height:40px}
+.buttons{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+button{padding:15px;font-size:16px;border:none;border-radius:8px;cursor:pointer;background:#333;color:#fff}
+button.operator{background:#0af;color:#000;font-weight:bold}
+button.equal{background:#0f0;color:#000;font-weight:bold;grid-column:span 2}
+</style>
+</head>
+<body>
+<div class="calculator">
+  <div class="display" id="display">0</div>
+  <div class="buttons">
+    <button onclick="append('sin(')">sin</button>
+    <button onclick="append('cos(')">cos</button>
+    <button onclick="append('tan(')">tan</button>
+    <button onclick="append('^')">xʸ</button>
+    <button onclick="append('sqrt(')">√</button>
+    <button onclick="append('7')">7</button>
+    <button onclick="append('8')">8</button>
+    <button onclick="append('9')">9</button>
+    <button class="operator" onclick="append('/')">÷</button>
+    <button onclick="append('(')">(</button>
+    <button onclick="append('4')">4</button>
+    <button onclick="append('5')">5</button>
+    <button onclick="append('6')">6</button>
+    <button class="operator" onclick="append('*')">×</button>
+    <button onclick="append(')')">)</button>
+    <button onclick="append('1')">1</button>
+    <button onclick="append('2')">2</button>
+    <button onclick="append('3')">3</button>
+    <button class="operator" onclick="append('-')">−</button>
+    <button onclick="append('pi')">π</button>
+    <button onclick="append('0')">0</button>
+    <button onclick="append('.')">.</button>
+    <button class="equal" onclick="calculate()">=</button>
+    <button class="operator" onclick="append('+')">+</button>
+    <button onclick="clearDisplay()">C</button>
+  </div>
+</div>
+
+<script>
+let display = document.getElementById('display');
+function append(val){
+  if(display.textContent==='0' || display.textContent==='Error') display.textContent=val;
+  else display.textContent+=val;
+}
+function clearDisplay(){display.textContent='0';}
+function calculate(){
+  try{
+    let expr = display.textContent
+      .replace(/pi/g, Math.PI)
+      .replace(/√/g,'Math.sqrt')
+      .replace(/sin\\(/g,'Math.sin(')
+      .replace(/cos\\(/g,'Math.cos(')
+      .replace(/tan\\(/g,'Math.tan(')
+      .replace(/\\^/g,'**');
+    display.textContent = eval(expr);
+  }catch(e){display.textContent='Error';}
+}
+</script>
+</body>
+</html>
