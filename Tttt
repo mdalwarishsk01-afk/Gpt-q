@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>वैज्ञानिक कैलकुलेटर</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            padding: 20px;
+        }
+
+        .calculator {
+            background-color: #1e1e2e;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 400px;
+            overflow: hidden;
+            color: white;
+        }
+
+        .display {
+            background-color: #2d3047;
+            padding: 20px;
+            text-align: right;
+            border-bottom: 1px solid #3d4163;
+        }
+
+        .display-expression {
+            font-size: 18px;
+            min-height: 27px;
+            color: #a9b1d6;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+
+        .display-result {
+            font-size: 32px;
+            font-weight: bold;
+            min-height: 40px;
+            color: #ffffff;
+        }
+
+        .memory-indicator {
+            font-size: 12px;
+            color: #7dcfff;
+            margin-top: 5px;
+            text-align: left;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            padding: 20px;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 15px 0;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: white;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .number {
+            background-color: #3d4163;
+        }
+
+        .number:hover {
+            background-color: #51557e;
+        }
+
+        .operator {
+            background-color: #7aa2f7;
+        }
+
+        .operator:hover {
+            background-color: #89b4fa;
+        }
+
+        .function {
+            background-color: #bb9af7;
+        }
+
+        .function:hover {
+            background-color: #c8aefa;
+        }
+
+        .equals {
+            background-color: #f7768e;
+            grid-column: span 2;
+        }
+
+        .equals:hover {
+            background-color: #fa8a9e;
+        }
+
+        .clear {
+            background-color: #ff9e64;
+        }
+
+        .clear:hover {
+            background-color: #ffb183;
+        }
+
+        .memory {
+            background-color: #73daca;
+            color: #1e1e2e;
+        }
+
+        .memory:hover {
+            background-color: #8ae0d2;
+        }
+
+        .toggle {
+            background-color: #e0af68;
+            color: #1e1e2e;
+        }
+
+        .toggle:hover {
+            background-color: #e6bb7e;
+        }
+
+        .mode-indicator {
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+            background-color: #2d3047;
+            border-top: 1px solid #3d4163;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <div class="display-expression" id="expression"></div>
+            <div class="display-result" id="result">0</div>
+            <div class="memory-indicator" id="memory-indicator"></div>
+        </div>
+        <div class="controls">
+            <!-- पहली पंक्ति -->
+            <button class="function" onclick="toggleAngleMode()">DEG/RAD</button>
+            <button class="memory" onclick="memoryClear()">MC</button>
+            <button class="memory" onclick="memoryRecall()">MR</button>
+            <button class="memory" onclick="memoryAdd()">M+</button>
+            <button class="memory" onclick="memorySubtract()">M-</button>
+            
+            <!-- दूसरी पंक्ति -->
+            <button class="function" onclick="addToExpression('(')">(</button>
+            <button class="function" onclick="addToExpression(')')">)</button>
+            <button class="function" onclick="addToExpression('π')">π</button>
+            <button class="function" onclick="addToExpression('e')">e</button>
+            <button class="clear" onclick="clearAll()">C</button>
+            
+            <!-- तीसरी पंक्ति -->
+            <button class="function" onclick="addFunction('sin(')">sin</button>
+            <button class="function" onclick="addFunction('cos(')">cos</button>
+            <button class="function" onclick="addFunction('tan(')">tan</button>
+            <button class="function" onclick="addToExpression('^')">x^y</button>
+            <button class="function" onclick="addToExpression('√(')">√</button>
+            
+            <!-- चौथी पंक्ति -->
+            <button class="function" onclick="addFunction('log(')">log</button>
+            <button class="function" onclick="addFunction('ln(')">ln</button>
+            <button class="function" onclick="addToExpression('!')">x!</button>
+            <button class="function" onclick="addToExpression('%')">%</button>
+            <button class="clear" onclick="clearEntry()">CE</button>
+            
+            <!-- पाँचवीं पंक्ति -->
+            <button class="number" onclick="addToExpression('7')">7</button>
+            <button class="number" onclick="addToExpression('8')">8</button>
+            <button class="number" onclick="addToExpression('9')">9</button>
+            <button class="operator" onclick="addToExpression('/')">÷</button>
+            <button class="function" onclick="addToExpression('ANS')">ANS</button>
+            
+            <!-- छठी पंक्ति -->
+            <button class="number" onclick="addToExpression('4')">4</button>
+            <button class="number" onclick="addToExpression('5')">5</button>
+            <button class="number" onclick="addToExpression('6')">6</button>
+            <button class="operator" onclick="addToExpression('*')">×</button>
+            <button class="function" onclick="addToExpression('10^')">10^x</button>
+            
+            <!-- सातवीं पंक्ति -->
+            <button class="number" onclick="addToExpression('1')">1</button>
+            <button class="number" onclick="addToExpression('2')">2</button>
+            <button class="number" onclick="addToExpression('3')">3</button>
+            <button class="operator" onclick="addToExpression('-')">-</button>
+            <button class="function" onclick="addToExpression('1/')">1/x</button>
+            
+            <!-- आठवीं पंक्ति -->
+            <button class="number" onclick="addToExpression('0')">0</button>
+            <button class="number" onclick="addToExpression('.')">.</button>
+            <button class="equals" onclick="calculate()">=</button>
+            <button class="operator" onclick="addToExpression('+')">+</button>
+            <button class="function" onclick="addToExpression('^2')">x²</button>
+        </div>
+        <div class="mode-indicator" id="mode-indicator">मोड: DEG</div>
+    </div>
+
+    <script>
+        let expression = '';
+        let result = '0';
+        let memory = 0;
+        let angleMode = 'DEG'; // DEG or RAD
+        let lastAnswer = 0;
+
+        const expressionElement = document.getElementById('expression');
+        const resultElement = document.getElementById('result');
+        const memoryIndicator = document.getElementById('memory-indicator');
+        const modeIndicator = document.getElementById('mode-indicator');
+
+        function updateDisplay() {
+            expressionElement.textContent = expression || '0';
+            resultElement.textContent = result;
+            memoryIndicator.textContent = memory !== 0 ? `M: ${memory}` : '';
+            modeIndicator.textContent = `मोड: ${angleMode}`;
+        }
+
+        function addToExpression(value) {
+            if (value === 'ANS') {
+                expression += lastAnswer;
+            } else {
+                expression += value;
+            }
+            updateDisplay();
+        }
+
+        function addFunction(func) {
+            expression += func;
+            updateDisplay();
+        }
+
+        function clearAll() {
+            expression = '';
+            result = '0';
+            updateDisplay();
+        }
+
+        function clearEntry() {
+            expression = '';
+            updateDisplay();
+        }
+
+        function toggleAngleMode() {
+            angleMode = angleMode === 'DEG' ? 'RAD' : 'DEG';
+            updateDisplay();
+        }
+
+        // मेमोरी फ़ंक्शन
+        function memoryClear() {
+            memory = 0;
+            updateDisplay();
+        }
+
+        function memoryRecall() {
+            expression += memory;
+            updateDisplay();
+        }
+
+        function memoryAdd() {
+            try {
+                const currentValue = evaluateExpression(expression);
+                memory += currentValue;
+                updateDisplay();
+            } catch (error) {
+                result = 'Error';
+                updateDisplay();
+            }
+        }
+
+        function memorySubtract() {
+            try {
+                const currentValue = evaluateExpression(expression);
+                memory -= currentValue;
+                updateDisplay();
+            } catch (error) {
+                result = 'Error';
+                updateDisplay();
+            }
+        }
+
+        // कैलकुलेशन फ़ंक्शन
+        function calculate() {
+            try {
+                result = evaluateExpression(expression);
+                lastAnswer = result;
+                expression = '';
+                updateDisplay();
+            } catch (error) {
+                result = 'Error';
+                updateDisplay();
+            }
+        }
+
+        function evaluateExpression(expr) {
+            // ANS को lastAnswer से बदलें
+            expr = expr.replace(/ANS/g, lastAnswer);
+            
+            // π और e को उनके मानों से बदलें
+            expr = expr.replace(/π/g, Math.PI);
+            expr = expr.replace(/e/g, Math.E);
+            
+            // डिग्री को रेडियन में बदलें
+            if (angleMode === 'DEG') {
+                expr = expr.replace(/sin\(/g, 'sinDeg(');
+                expr = expr.replace(/cos\(/g, 'cosDeg(');
+                expr = expr.replace(/tan\(/g, 'tanDeg(');
+            }
+            
+            // फैक्टोरियल फ़ंक्शन
+            expr = expr.replace(/(\d+)!/g, function(match, num) {
+                return factorial(parseInt(num));
+            });
+            
+            // वर्ग फ़ंक्शन
+            expr = expr.replace(/(\d+)\^2/g, function(match, num) {
+                return Math.pow(parseInt(num), 2);
+            });
+            
+            // 1/x फ़ंक्शन
+            expr = expr.replace(/1\/(\d+)/g, function(match, num) {
+                return 1 / parseInt(num);
+            });
+            
+            // 10^x फ़ंक्शन
+            expr = expr.replace(/10\^(\d+)/g, function(match, num) {
+                return Math.pow(10, parseInt(num));
+            });
+            
+            // प्रतिशत फ़ंक्शन
+            expr = expr.replace(/(\d+)%/g, function(match, num) {
+                return parseFloat(num) / 100;
+            });
+            
+            // मूल फ़ंक्शन
+            expr = expr.replace(/√\(([^)]+)\)/g, function(match, innerExpr) {
+                return Math.sqrt(evaluateExpression(innerExpr));
+            });
+            
+            // पावर फ़ंक्शन
+            expr = expr.replace(/(\d+)\^(\d+)/g, function(match, base, exponent) {
+                return Math.pow(parseFloat(base), parseFloat(exponent));
+            });
+            
+            // लॉग फ़ंक्शन
+            expr = expr.replace(/log\(([^)]+)\)/g, function(match, innerExpr) {
+                return Math.log10(evaluateExpression(innerExpr));
+            });
+            
+            // प्राकृतिक लॉग फ़ंक्शन
+            expr = expr.replace(/ln\(([^)]+)\)/g, function(match, innerExpr) {
+                return Math.log(evaluateExpression(innerExpr));
+            });
+            
+            // सुरक्षित eval का उपयोग करके कैलकुलेशन
+            return Function(`"use strict"; return (${expr})`)();
+        }
+
+        // डिग्री मोड के लिए त्रिकोणमितीय फ़ंक्शन
+        function sinDeg(degrees) {
+            return Math.sin(degrees * Math.PI / 180);
+        }
+
+        function cosDeg(degrees) {
+            return Math.cos(degrees * Math.PI / 180);
+        }
+
+        function tanDeg(degrees) {
+            return Math.tan(degrees * Math.PI / 180);
+        }
+
+        // फैक्टोरियल फ़ंक्शन
+        function factorial(n) {
+            if (n < 0) return NaN;
+            if (n === 0 || n === 1) return 1;
+            let result = 1;
+            for (let i = 2; i <= n; i++) {
+                result *= i;
+            }
+            return result;
+        }
+
+        // कीबोर्ड सपोर्ट
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            
+            if (key >= '0' && key <= '9') {
+                addToExpression(key);
+            } else if (key === '.') {
+                addToExpression('.');
+            } else if (key === '+') {
+                addToExpression('+');
+            } else if (key === '-') {
+                addToExpression('-');
+            } else if (key === '*') {
+                addToExpression('*');
+            } else if (key === '/') {
+                event.preventDefault();
+                addToExpression('/');
+            } else if (key === 'Enter' || key === '=') {
+                event.preventDefault();
+                calculate();
+            } else if (key === 'Escape' || key === 'Delete') {
+                clearAll();
+            } else if (key === 'Backspace') {
+                expression = expression.slice(0, -1);
+                updateDisplay();
+            } else if (key === '(') {
+                addToExpression('(');
+            } else if (key === ')') {
+                addToExpression(')');
+            } else if (key === '^') {
+                addToExpression('^');
+            } else if (key === '!') {
+                addToExpression('!');
+            }
+        });
+
+        // प्रारंभिक डिस्प्ले अपडेट
+        updateDisplay();
+    </script>
+</body>
+</html>
