@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>वैज्ञानिक कैलकुलेटर</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .calculator {
+            background-color: #2c3e50;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            width: 380px;
+            overflow: hidden;
+            color: white;
+        }
+
+        .display {
+            background-color: #34495e;
+            padding: 20px;
+            text-align: right;
+            border-bottom: 2px solid #3d566e;
+            min-height: 140px;
+        }
+
+        .display-expression {
+            font-size: 16px;
+            min-height: 24px;
+            color: #bdc3c7;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+        }
+
+        .display-result {
+            font-size: 28px;
+            font-weight: bold;
+            min-height: 35px;
+            color: #ecf0f1;
+            word-wrap: break-word;
+            margin-bottom: 10px;
+        }
+
+        .previous-results {
+            font-size: 14px;
+            color: #7f8c8d;
+            text-align: left;
+            border-top: 1px solid #3d566e;
+            padding-top: 8px;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .previous-results div {
+            margin-bottom: 3px;
+            padding: 2px 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .previous-results div:hover {
+            background-color: #3d566e;
+        }
+
+        .memory-indicator {
+            font-size: 12px;
+            color: #3498db;
+            margin-top: 5px;
+            text-align: left;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            padding: 15px;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 12px 0;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: white;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .number {
+            background-color: #34495e;
+        }
+
+        .number:hover {
+            background-color: #3d566e;
+        }
+
+        .operator {
+            background-color: #e74c3c;
+        }
+
+        .operator:hover {
+            background-color: #ec7063;
+        }
+
+        .function {
+            background-color: #9b59b6;
+        }
+
+        .function:hover {
+            background-color: #af7ac5;
+        }
+
+        .equals {
+            background-color: #2ecc71;
+        }
+
+        .equals:hover {
+            background-color: #58d68d;
+        }
+
+        .clear {
+            background-color: #e67e22;
+        }
+
+        .clear:hover {
+            background-color: #eb984e;
+        }
+
+        .memory {
+            background-color: #3498db;
+        }
+
+        .memory:hover {
+            background-color: #5dade2;
+        }
+
+        .toggle {
+            background-color: #f1c40f;
+            color: #2c3e50;
+        }
+
+        .toggle:hover {
+            background-color: #f4d03f;
+        }
+
+        .history {
+            background-color: #1abc9c;
+        }
+
+        .history:hover {
+            background-color: #48c9b0;
+        }
+
+        .backspace {
+            background-color: #e74c3c;
+        }
+
+        .backspace:hover {
+            background-color: #ec7063;
+        }
+
+        .mode-indicator {
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            background-color: #34495e;
+            border-top: 1px solid #3d566e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .error {
+            color: #e74c3c;
+        }
+
+        .history-panel {
+            position: absolute;
+            background: #2c3e50;
+            border: 2px solid #34495e;
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            width: 300px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .history-item {
+            padding: 8px;
+            border-bottom: 1px solid #3d566e;
+            cursor: pointer;
+        }
+
+        .history-item:hover {
+            background-color: #34495e;
+        }
+
+        .close-history {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <div class="display-expression" id="expression"></div>
+            <div class="display-result" id="result">0</div>
+            <div class="previous-results" id="previousResults"></div>
+            <div class="memory-indicator" id="memory-indicator"></div>
+        </div>
+        <div class="controls">
+            <!-- पहली पंक्ति -->
+            <button class="toggle" onclick="toggleAngleMode()">DEG/RAD</button>
+            <button class="memory" onclick="memoryClear()">MC</button>
+            <button class="memory" onclick="memoryRecall()">MR</button>
+            <button class="memory" onclick="memoryAdd()">M+</button>
+            <button class="memory" onclick="memorySubtract()">M-</button>
+            
+            <!-- दूसरी पंक्ति -->
+            <button class="function" onclick="addToExpression('(')">(</button>
+            <button class="function" onclick="addToExpression(')')">)</button>
+            <button class="function" onclick="addConstant('π')">π</button>
+            <button class="function" onclick="addConstant('e')">e</button>
+            <button class="backspace" onclick="backspace()">⌫</button>
+            
+            <!-- तीसरी पंक्ति -->
+            <button class="function" onclick="addFunction('sin(')">sin</button>
+            <button class="function" onclick="addFunction('cos(')">cos</button>
+            <button class="function" onclick="addFunction('tan(')">tan</button>
+            <button class="function" onclick="addToExpression('^')">x^y</button>
+            <button class="function" onclick="addSquareRoot()">√</button>
+            
+            <!-- चौथी पंक्ति -->
+            <button class="function" onclick="addFunction('log(')">log</button>
+            <button class="function" onclick="addFunction('ln(')">ln</button>
+            <button class="function" onclick="addToExpression('!')">x!</button>
+            <button class="function" onclick="addToExpression('%')">%</button>
+            <button class="history" onclick="toggleHistory()">📜</button>
+            
+            <!-- पाँचवीं पंक्ति -->
+            <button class="number" onclick="addToExpression('7')">7</button>
+            <button class="number" onclick="addToExpression('8')">8</button>
+            <button class="number" onclick="addToExpression('9')">9</button>
+            <button class="operator" onclick="addToExpression('/')">÷</button>
+            <button class="function" onclick="addFunction('10^(')">10^x</button>
+            
+            <!-- छठी पंक्ति -->
+            <button class="number" onclick="addToExpression('4')">4</button>
+            <button class="number" onclick="addToExpression('5')">5</button>
+            <button class="number" onclick="addToExpression('6')">6</button>
+            <button class="operator" onclick="addToExpression('*')">×</button>
+            <button class="function" onclick="addFunction('1/(')">1/x</button>
+            
+            <!-- सातवीं पंक्ति -->
+            <button class="number" onclick="addToExpression('1')">1</button>
+            <button class="number" onclick="addToExpression('2')">2</button>
+            <button class="number" onclick="addToExpression('3')">3</button>
+            <button class="operator" onclick="addToExpression('-')">-</button>
+            <button class="function" onclick="addToExpression('^2')">x²</button>
+            
+            <!-- आठवीं पंक्ति -->
+            <button class="number" onclick="addToExpression('0')">0</button>
+            <button class="number" onclick="addToExpression('.')">.</button>
+            <button class="clear" onclick="clearAll()">C</button>
+            <button class="operator" onclick="addToExpression('+')">+</button>
+            <button class="equals" onclick="calculate()">=</button>
+        </div>
+        <div class="mode-indicator">
+            <span id="mode-indicator">मोड: DEG</span>
+            <span id="calculation-count">कैलकुलेशन: 0</span>
+        </div>
+    </div>
+
+    <div class="history-panel" id="historyPanel">
+        <h3 style="margin-bottom: 10px; text-align: center;">Calculation History</h3>
+        <div id="historyList"></div>
+        <button class="close-history" onclick="toggleHistory()">Close</button>
+    </div>
+
+    <script>
+        let expression = '';
+        let result = '0';
+        let memory = 0;
+        let angleMode = 'DEG';
+        let calculationHistory = [];
+        let calculationCount = 0;
+
+        const expressionElement = document.getElementById('expression');
+        const resultElement = document.getElementById('result');
+        const memoryIndicator = document.getElementById('memory-indicator');
+        const modeIndicator = document.getElementById('mode-indicator');
+        const previousResults = document.getElementById('previousResults');
+        const calculationCountElement = document.getElementById('calculation-count');
+        const historyPanel = document.getElementById('historyPanel');
+        const historyList = document.getElementById('historyList');
+
+        function updateDisplay() {
+            expressionElement.textContent = expression || '0';
+            resultElement.textContent = result;
+            memoryIndicator.textContent = memory !== 0 ? `M: ${memory}` : '';
+            modeIndicator.textContent = `मोड: ${angleMode}`;
+            calculationCountElement.textContent = `कैलकुलेशन: ${calculationCount}`;
+            
+            if (result === 'Error') {
+                resultElement.classList.add('error');
+            } else {
+                resultElement.classList.remove('error');
+            }
+            
+            updatePreviousResults();
+        }
+
+        function updatePreviousResults() {
+            // सिर्फ recent 3 results दिखाएं
+            const recentResults = calculationHistory.slice(-3);
+            previousResults.innerHTML = recentResults.map(item => 
+                `<div onclick="usePreviousResult('${item.result}')">${item.expression} = ${item.result}</div>`
+            ).join('');
+        }
+
+        function usePreviousResult(prevResult) {
+            expression += prevResult;
+            updateDisplay();
+        }
+
+        function addToExpression(value) {
+            expression += value;
+            updateDisplay();
+        }
+
+        function addFunction(func) {
+            expression += func;
+            updateDisplay();
+        }
+
+        function addSquareRoot() {
+            expression += '√(';
+            updateDisplay();
+        }
+
+        function addConstant(constant) {
+            expression += constant;
+            updateDisplay();
+        }
+
+        function clearAll() {
+            expression = '';
+            result = '0';
+            updateDisplay();
+        }
+
+        function backspace() {
+            expression = expression.slice(0, -1);
+            updateDisplay();
+        }
+
+        function toggleAngleMode() {
+            angleMode = angleMode === 'DEG' ? 'RAD' : 'DEG';
+            updateDisplay();
+        }
+
+        // मेमोरी फ़ंक्शन
+        function memoryClear() {
+            memory = 0;
+            updateDisplay();
+        }
+
+        function memoryRecall() {
+            expression += memory;
+            updateDisplay();
+        }
+
+        function memoryAdd() {
+            try {
+                const currentValue = evaluateExpression(expression);
+                memory += currentValue;
+                updateDisplay();
+            } catch (error) {
+                result = 'Error';
+                updateDisplay();
+            }
+        }
+
+        function memorySubtract() {
+            try {
+                const currentValue = evaluateExpression(expression);
+                memory -= currentValue;
+                updateDisplay();
+            } catch (error) {
+                result = 'Error';
+                updateDisplay();
+            }
+        }
+
+        // कैलकुलेशन फ़ंक्शन
+        function calculate() {
+            try {
+                const calculationResult = evaluateExpression(expression);
+                result = calculationResult;
+                
+                // History में add करें
+                calculationHistory.push({
+                    expression: expression,
+                    result: result,
+                    timestamp: new Date().toLocaleTimeString()
+                });
+                
+                calculationCount++;
+                
+                // Expression को result के साथ update करें ताकि फिर से calculate कर सकें
+                expression = result.toString();
+                
+                updateDisplay();
+            } catch (error) {
+                result = 'Error';
+                updateDisplay();
+            }
+        }
+
+        function evaluateExpression(expr) {
+            if (!expr) return '0';
+            
+            // पहले expression को normalize करें
+            let normalizedExpr = normalizeExpression(expr);
+            
+            // फिर evaluation करें
+            return safeEvaluate(normalizedExpr);
+        }
+
+        function normalizeExpression(expr) {
+            // Step 1: π और e को replace करें
+            expr = expr.replace(/π/g, Math.PI.toString());
+            expr = expr.replace(/e/g, Math.E.toString());
+            
+            // Step 2: √ को process करें
+            expr = processSquareRoot(expr);
+            
+            // Step 3: Functions को process करें
+            expr = processFunctions(expr);
+            
+            // Step 4: Implicit multiplication add करें
+            expr = addImplicitMultiplication(expr);
+            
+            return expr;
+        }
+
+        function processSquareRoot(expr) {
+            let result = '';
+            let i = 0;
+            
+            while (i < expr.length) {
+                if (expr[i] === '√') {
+                    // √ के बाद का number/expression निकालें
+                    let j = i + 1;
+                    let content = '';
+                    let parenCount = 0;
+                    
+                    while (j < expr.length) {
+                        if (expr[j] === '(') {
+                            parenCount++;
+                            content += expr[j];
+                        } else if (expr[j] === ')') {
+                            if (parenCount === 0) break;
+                            parenCount--;
+                            content += expr[j];
+                        } else if (parenCount === 0 && !isDigit(expr[j]) && expr[j] !== '.') {
+                            break;
+                        } else {
+                            content += expr[j];
+                        }
+                        j++;
+                    }
+                    
+                    if (content) {
+                        result += `Math.sqrt(${content})`;
+                    } else {
+                        result += 'Math.sqrt(';
+                    }
+                    i = j;
+                } else {
+                    result += expr[i];
+                    i++;
+                }
+            }
+            
+            return result;
+        }
+
+        function processFunctions(expr) {
+            // त्रिकोणमितीय functions
+            const trigFuncs = ['sin', 'cos', 'tan'];
+            for (const func of trigFuncs) {
+                const regex = new RegExp(`${func}\\(([^)]+)\\)`, 'g');
+                expr = expr.replace(regex, (match, angle) => {
+                    if (angleMode === 'DEG') {
+                        return `Math.${func}(${angle} * Math.PI / 180)`;
+                    } else {
+                        return `Math.${func}(${angle})`;
+                    }
+                });
+            }
+            
+            // log functions
+            expr = expr.replace(/log\(([^)]+)\)/g, 'Math.log10($1)');
+            expr = expr.replace(/ln\(([^)]+)\)/g, 'Math.log($1)');
+            
+            // 10^x
+            expr = expr.replace(/10\^\(([^)]+)\)/g, 'Math.pow(10, $1)');
+            
+            // 1/x
+            expr = expr.replace(/1\/\(([^)]+)\)/g, '(1 / $1)');
+            
+            return expr;
+        }
+
+        function addImplicitMultiplication(expr) {
+            // number( के बीच multiplication add करें
+            expr = expr.replace(/(\d)(\()/g, '$1*$2');
+            // )number के बीच multiplication add करें  
+            expr = expr.replace(/(\))(\d)/g, '$1*$2');
+            // numberletter के बीच multiplication add करें
+            expr = expr.replace(/(\d)([a-zA-Z])/g, '$1*$2');
+            
+            return expr;
+        }
+
+        function isDigit(char) {
+            return char >= '0' && char <= '9';
+        }
+
+        function safeEvaluate(expr) {
+            try {
+                // Factorial process करें
+                expr = processFactorial(expr);
+                
+                // Power operations process करें
+                expr = processPowerOperations(expr);
+                
+                // Percentage process करें
+                expr = processPercentage(expr);
+                
+                // Final evaluation
+                const result = Function(`"use strict"; return (${expr})`)();
+                return Number.isFinite(result) ? result : 'Error';
+            } catch (error) {
+                throw new Error('Calculation error');
+            }
+        }
+
+        function processFactorial(expr) {
+            return expr.replace(/(\d+(?:\.\d+)?)!/g, (match, num) => {
+                return factorial(parseFloat(num)).toString();
+            });
+        }
+
+        function processPowerOperations(expr) {
+            // x^y
+            expr = expr.replace(/(\d+(?:\.\d+)?)\^(\d+(?:\.\d+)?)/g, (match, base, exp) => {
+                return `Math.pow(${base}, ${exp})`;
+            });
+            
+            // x^2
+            expr = expr.replace(/(\d+(?:\.\d+)?)\^2/g, (match, num) => {
+                return `Math.pow(${num}, 2)`;
+            });
+            
+            return expr;
+        }
+
+        function processPercentage(expr) {
+            return expr.replace(/(\d+(?:\.\d+)?)%/g, '($1 / 100)');
+        }
+
+        function factorial(n) {
+            if (n < 0) return NaN;
+            if (n === 0 || n === 1) return 1;
+            if (n > 100) return Infinity;
+            if (!Number.isInteger(n)) {
+                return Math.sqrt(2 * Math.PI * n) * Math.pow(n / Math.E, n);
+            }
+            let result = 1;
+            for (let i = 2; i <= n; i++) {
+                result *= i;
+            }
+            return result;
+        }
+
+        // History Functions
+        function toggleHistory() {
+            if (historyPanel.style.display === 'block') {
+                historyPanel.style.display = 'none';
+            } else {
+                updateHistoryList();
+                historyPanel.style.display = 'block';
+            }
+        }
+
+        function updat
