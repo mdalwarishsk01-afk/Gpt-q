@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>वैज्ञानिक कैलकुलेटर</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .calculator {
+            background-color: #2c3e50;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            width: 400px;
+            overflow: hidden;
+            color: white;
+        }
+
+        .display {
+            background-color: #34495e;
+            padding: 20px;
+            text-align: right;
+            border-bottom: 2px solid #3d566e;
+            min-height: 120px;
+        }
+
+        .display-expression {
+            font-size: 18px;
+            min-height: 27px;
+            color: #bdc3c7;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+
+        .display-result {
+            font-size: 32px;
+            font-weight: bold;
+            min-height: 40px;
+            color: #ecf0f1;
+            word-wrap: break-word;
+        }
+
+        .memory-indicator {
+            font-size: 12px;
+            color: #3498db;
+            margin-top: 5px;
+            text-align: left;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            padding: 20px;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 15px 0;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: white;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .number {
+            background-color: #34495e;
+        }
+
+        .number:hover {
+            background-color: #3d566e;
+        }
+
+        .operator {
+            background-color: #e74c3c;
+        }
+
+        .operator:hover {
+            background-color: #ec7063;
+        }
+
+        .function {
+            background-color: #9b59b6;
+        }
+
+        .function:hover {
+            background-color: #af7ac5;
+        }
+
+        .equals {
+            background-color: #2ecc71;
+            grid-column: span 2;
+        }
+
+        .equals:hover {
+            background-color: #58d68d;
+        }
+
+        .clear {
+            background-color: #e67e22;
+        }
+
+        .clear:hover {
+            background-color: #eb984e;
+        }
+
+        .memory {
+            background-color: #3498db;
+        }
+
+        .memory:hover {
+            background-color: #5dade2;
+        }
+
+        .toggle {
+            background-color: #f1c40f;
+            color: #2c3e50;
+        }
+
+        .toggle:hover {
+            background-color: #f4d03f;
+        }
+
+        .backspace {
+            background-color: #e74c3c;
+        }
+
+        .backspace:hover {
+            background-color: #ec7063;
+        }
+
+        .mode-indicator {
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+            background-color: #34495e;
+            border-top: 1px solid #3d566e;
+        }
+
+        .error {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <div class="display-expression" id="expression">0</div>
+            <div class="display-result" id="result">0</div>
+            <div class="memory-indicator" id="memory-indicator"></div>
+        </div>
+        <div class="controls">
+            <!-- पहली पंक्ति -->
+            <button class="toggle" onclick="toggleAngleMode()">DEG/RAD</button>
+            <button class="memory" onclick="memoryClear()">MC</button>
+            <button class="memory" onclick="memoryRecall()">MR</button>
+            <button class="memory" onclick="memoryAdd()">M+</button>
+            <button class="memory" onclick="memorySubtract()">M-</button>
+            
+            <!-- दूसरी पंक्ति -->
+            <button class="function" onclick="addToExpression('(')">(</button>
+            <button class="function" onclick="addToExpression(')')">)</button>
+            <button class="function" onclick="addConstant('π')">π</button>
+            <button class="function" onclick="addConstant('e')">e</button>
+            <button class="backspace" onclick="backspace()">⌫</button>
+            
+            <!-- तीसरी पंक्ति -->
+            <button class="function" onclick="addFunction('sin(')">sin</button>
+            <button class="function" onclick="addFunction('cos(')">cos</button>
+            <button class="function" onclick="addFunction('tan(')">tan</button>
+            <button class="function" onclick="addToExpression('^')">x^y</button>
+            <button class="function" onclick="addSquareRoot()">√</button>
+            
+            <!-- चौथी पंक्ति -->
+            <button class="function" onclick="addFunction('log(')">log</button>
+            <button class="function" onclick="addFunction('ln(')">ln</button>
+            <button class="function" onclick="addToExpression('!')">x!</button>
+            <button class="function" onclick="addToExpression('%')">%</button>
+            <button class="clear" onclick="clearAll()">C</button>
+            
+            <!-- पाँचवीं पंक्ति -->
+            <button class="number" onclick="addToExpression('7')">7</button>
+            <button class="number" onclick="addToExpression('8')">8</button>
+            <button class="number" onclick="addToExpression('9')">9</button>
+            <button class="operator" onclick="addToExpression('/')">÷</button>
+            <button class="function" onclick="addFunction('10^(')">10^x</button>
+            
+            <!-- छठी पंक्ति -->
+            <button class="number" onclick="addToExpression('4')">4</button>
+            <button class="number" onclick="addToExpression('5')">5</button>
+            <button class="number" onclick="addToExpression('6')">6</button>
+            <button class="operator" onclick="addToExpression('*')">×</button>
+            <button class="function" onclick="addFunction('1/(')">1/x</button>
+            
+            <!-- सातवीं पंक्ति -->
+            <button class="number" onclick="addToExpression('1')">1</button>
+            <button class="number" onclick="addToExpression('2')">2</button>
+            <button class="number" onclick="addToExpression('3')">3</button>
+            <button class="operator" onclick="addToExpression('-')">-</button>
+            <button class="function" onclick="addToExpression('^2')">x²</button>
+            
+            <!-- आठवीं पंक्ति -->
+            <button class="number" onclick="addToExpression('0')">0</button>
+            <button class="number" onclick="addToExpression('.')">.</button>
+            <button class="equals" onclick="calculate()">=</button>
+            <button class="operator" onclick="addToExpression('+')">+</button>
+        </div>
+        <div class="mode-indicator" id="mode-indicator">मोड: DEG</div>
+    </div>
+
+    <script>
+        // Simple calculator implementation
+        let expression = '0';
+        let result = '0';
+        let memory = 0;
+        let angleMode = 'DEG';
+
+        const expressionElement = document.getElementById('expression');
+        const resultElement = document.getElementById('result');
+        const memoryIndicator = document.getElementById('memory-indicator');
+        const modeIndicator = document.getElementById('mode-indicator');
+
+        function updateDisplay() {
+            expressionElement.textContent = expression;
+            resultElement.textContent = result;
+            memoryIndicator.textContent = memory !== 0 ? `M: ${memory}` : '';
+            modeIndicator.textContent = `मोड: ${angleMode}`;
+            
+            if (result === 'Error') {
+                resultElement.classList.add('error');
+            } else {
+                resultElement.classList.remove('error');
+            }
+        }
+
+        function addToExpression(value) {
+            if (expression === '0' && value !== '.') {
+                expression = value;
+            } else {
+                expression += value;
+            }
+            updateDisplay();
+        }
+
+        function addFunction(func) {
+            if (expression === '0') {
+                expression = func;
+            } else {
+                expression += func;
+            }
+            updateDisplay();
+        }
+
+        function addSquareRoot() {
+            if (expression === '0') {
+                expression = '√(';
+            } else {
+                expression += '√(';
+            }
+            updateDisplay();
+        }
+
+        function addConstant(constant) {
+            if (expression === '0') {
+                expression = constant;
+            } else {
+                expression += constant;
+            }
+            updateDisplay();
+        }
+
+        function clearAll() {
+            expression = '0';
+            result = '0';
+            updateDisplay();
+        }
+
+        function backspace() {
+            if (expression.length > 1) {
+                expression = expression.slice(0, -1);
+            } else {
+                expression = '0';
+            }
+            updateDisplay();
+        }
+
+        function toggleAngleMode() {
+            angleMode = angleMode === 'DEG' ? 'RAD' : 'DEG';
+            updateDisplay();
+        }
+
+        // Memory functions
+        function memoryClear() {
+            memory = 0;
+            updateDisplay();
+        }
+
+        function memoryRecall() {
+            if (expression === '0') {
+                expression = memory.toString();
+            } else {
+                expression += memory.toString();
+            }
+            updateDisplay();
+        }
+
+        function memoryAdd() {
+            try {
+                const currentValue = eval(expression);
+                memory += currentValue;
+                updateDisplay();
+            } catch (error) {
+                result = 'Error';
+                updateDisplay();
+            }
+        }
+
+        function memorySubtract() {
+            try {
+                const currentValue = eval(expression);
+                memory -= currentValue;
+                updateDisplay();
+            } catch (error) {
+                result = 'Error';
+                updateDisplay();
+            }
+        }
+
+        // Calculate function
+        function calculate() {
+            try {
+                // Replace constants and functions with JavaScript equivalents
+                let calcExpression = expression
+                    .replace(/π/g, Math.PI)
+                    .replace(/e/g, Math.E)
+                    .replace(/√\(/g, 'Math.sqrt(')
+                    .replace(/sin\(/g, angleMode === 'DEG' ? 'Math.sin(Math.PI/180*' : 'Math.sin(')
+                    .replace(/cos\(/g, angleMode === 'DEG' ? 'Math.cos(Math.PI/180*' : 'Math.cos(')
+                    .replace(/tan\(/g, angleMode === 'DEG' ? 'Math.tan(Math.PI/180*' : 'Math.tan(')
+                    .replace(/log\(/g, 'Math.log10(')
+                    .replace(/ln\(/g, 'Math.log(')
+                    .replace(/10^\(/g, 'Math.pow(10,')
+                    .replace(/1\/\(/g, '1/(');
+
+                // Process factorial
+                calcExpression = calcExpression.replace(/(\d+)!/g, function(match, num) {
+                    let n = parseInt(num);
+                    if (n < 0) return 'NaN';
+                    let fact = 1;
+                    for (let i = 2; i <= n; i++) fact *= i;
+                    return fact;
+                });
+
+                // Process percentage
+                calcExpression = calcExpression.replace(/(\d+)%/g, function(match, num) {
+                    return (parseFloat(num) / 100).toString();
+                });
+
+                // Process power operations
+                calcExpression = calcExpression.replace(/(\d+)\^2/g, function(match, num) {
+                    return Math.pow(parseFloat(num), 2);
+                });
+
+                // Evaluate the expression
+                result = eval(calcExpression);
+                
+                // Handle division by zero and other errors
+                if (!isFinite(result)) {
+                    result = 'Error';
+                } else {
+                    result = parseFloat(result.toFixed(10)); // Round to 10 decimal places
+                }
+                
+                updateDisplay();
+                
+            } catch (error) {
+                result = 'Error';
+                updateDisplay();
+            }
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            
+            if (key >= '0' && key <= '9') {
+                addToExpression(key);
+            } else if (key === '.') {
+                addToExpression('.');
+            } else if (key === '+') {
+                addToExpression('+');
+            } else if (key === '-') {
+                addToExpression('-');
+            } else if (key === '*') {
+                addToExpression('*');
+            } else if (key === '/') {
+                event.preventDefault();
+                addToExpression('/');
+            } else if (key === 'Enter' || key === '=') {
+                event.preventDefault();
+                calculate();
+            } else if (key === 'Escape') {
+                clearAll();
+            } else if (key === 'Backspace') {
+                backspace();
+            } else if (key === '(') {
+                addToExpression('(');
+            } else if (key === ')') {
+                addToExpression(')');
+            } else if (key === '^') {
+                addToExpression('^');
+            } else if (key === '!') {
+                addToExpression('!');
+            }
+        });
+
+        // Initialize display
+        updateDisplay();
+
+        // Test the calculator
+        console.log("Calculator loaded successfully!");
+        console.log("Try these examples:");
+        console.log("7 + 8 = 15");
+        console.log("√(9) = 3");
+        console.log("sin(30) = 0.5 (in DEG mode)");
+    </script>
+</body>
+</html>
