@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scientific Calculator</title>
+<style>
+body {
+  background: #0e1a2b;
+  font-family: Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: white;
+  margin: 0;
+}
+.calculator {
+  background: #1c2736;
+  border-radius: 15px;
+  padding: 20px;
+  width: 340px;
+  box-shadow: 0 0 15px #000;
+}
+.display {
+  background: #000;
+  color: #0ff;
+  font-size: 26px;
+  text-align: right;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 15px;
+  word-wrap: break-word;
+}
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+button {
+  padding: 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+  background: #243447;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+button:hover { background: #3b4a63; }
+.operator { background: #0099cc; color: #000; font-weight: bold; }
+.equal { background: #00ff99; color: #000; font-weight: bold; grid-column: span 2; }
+.special { background: #ff9933; color: #000; font-weight: bold; }
+.toggle { background: #9900ff; color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="calculator">
+  <div id="display" class="display">0</div>
+
+  <div class="buttons">
+    <button onclick="append('sin(')">sin</button>
+    <button onclick="append('cos(')">cos</button>
+    <button onclick="append('tan(')">tan</button>
+    <button onclick="append('^')">xʸ</button>
+    <button class="toggle" onclick="toggleMode()" id="mode">DEG</button>
+
+    <button onclick="append('log(')">log</button>
+    <button onclick="append('ln(')">ln</button>
+    <button onclick="append('sqrt(')">√</button>
+    <button onclick="append('pi')">π</button>
+    <button onclick="append('e')">e</button>
+
+    <button onclick="append('7')">7</button>
+    <button onclick="append('8')">8</button>
+    <button onclick="append('9')">9</button>
+    <button class="operator" onclick="append('/')">÷</button>
+    <button onclick="append('!')">n!</button>
+
+    <button onclick="append('4')">4</button>
+    <button onclick="append('5')">5</button>
+    <button onclick="append('6')">6</button>
+    <button class="operator" onclick="append('*')">×</button>
+    <button onclick="append('%')">%</button>
+
+    <button onclick="append('1')">1</button>
+    <button onclick="append('2')">2</button>
+    <button onclick="append('3')">3</button>
+    <button class="operator" onclick="append('-')">−</button>
+    <button onclick="append('ANS')">Ans</button>
+
+    <button onclick="append('0')">0</button>
+    <button onclick="append('.')">.</button>
+    <button class="equal" onclick="calculate()">=</button>
+    <button class="operator" onclick="append('+')">+</button>
+    <button class="special" onclick="clearDisplay()">C</button>
+  </div>
+</div>
+
+<script>
+let display = document.getElementById("display");
+let modeBtn = document.getElementById("mode");
+let expr = "";
+let lastAns = 0;
+let mode = "DEG"; // or RAD
+
+function append(val){
+  if(display.textContent === "0" || display.textContent === "Error") display.textContent = val;
+  else display.textContent += val;
+}
+
+function clearDisplay(){
+  display.textContent = "0";
+  expr = "";
+}
+
+function toggleMode(){
+  mode = (mode === "DEG") ? "RAD" : "DEG";
+  modeBtn.textContent = mode;
+}
+
+function factorial(n){
+  if(n < 0) return NaN;
+  let res = 1;
+  for(let i = 1; i <= n; i++) res *= i;
+  return res;
+}
+
+function calculate(){
+  try {
+    let expression = display.textContent;
+    expression = expression.replace(/pi/g, Math.PI)
+      .replace(/e/g, Math.E)
+      .replace(/ANS/g, lastAns)
+      .replace(/%/g, "/100")
+      .replace(/sqrt\\(/g, "Math.sqrt(")
+      .replace(/log\\(/g, "Math.log10(")
+      .replace(/ln\\(/g, "Math.log(")
+      .replace(/\\^/g, "**")
+      .replace(/(\\d+(?:\\.\\d+)?)!/g, "factorial($1)");
+
+    // Trig functions (degree/radian)
+    if(mode === "DEG"){
+      expression = expression
+        .replace(/sin\\(/g, "Math.sin(Math.PI/180*")
+        .replace(/cos\\(/g, "Math.cos(Math.PI/180*")
+        .replace(/tan\\(/g, "Math.tan(Math.PI/180*");
+    } else {
+      expression = expression
+        .replace(/sin\\(/g, "Math.sin(")
+        .replace(/cos\\(/g, "Math.cos(")
+        .replace(/tan\\(/g, "Math.tan(");
+    }
+
+    let result = eval(expression);
+    if(isNaN(result) || !isFinite(result)) throw Error("Invalid");
+    display.textContent = result;
+    lastAns = result;
+  } catch (err) {
+    display.textContent = "Error";
+  }
+}
+</script>
+
+</body>
+</html>
